@@ -6,7 +6,7 @@ Introduction
 ------------
 Fax Robot is an easy-to-use API for sending faxes through your own faxmodem(s).
 It's based on a Flask web API and one or more worker processes. Faxes are sent
-into a queue (based on [rq][1]), so you can send tons of them in, and they'll be
+into a queue, so you can send tons of them in, and they'll be
 processed one by one. Or, if you have a bunch of faxmodems and phone lines, you
 can run multiple workers and power through them really quickly.
 
@@ -19,8 +19,8 @@ Fax Robot was designed to be easy to set up and configure by anyone with basic
 Python devops skills. It's licensed under
 [the GNU General Public License, Version 3][3].
 
-**There is a separate project called [faxrobot-www][7] which is a frontend
-webapp for the Fax Robot API.**
+**Also check out [faxrobot-www][7], which is a frontend webapp for the Fax Robot
+ API.**
 
 Dependencies
 ------------
@@ -185,7 +185,7 @@ If you have more than one faxmodem hooked up, you can run multiple instances of
 
 API Documentation
 -----------------
-Read the full API documentation at https://faxrobot.io/api
+**Read the full API documentation at https://faxrobot.io/api**
 
 [1]: http://python-rq.org/
 [2]: https://stripe.com
