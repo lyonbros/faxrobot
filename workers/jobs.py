@@ -15,6 +15,10 @@ session = Session()
 
 DEBUG_MODE = True
 
+# JL TODO ~ Fix this horrible hack. MODEM_DEVICE is set in worker.py by
+# modifying Pythons __builtin__ namespace. There has to be a better way.
+device = MODEM_DEVICE if 'MODEM_DEVICE' in globals() else '/dev/ttyUSB0'
+
 def initial_process(id, data = None):
 
     from boto.s3.connection import S3Connection
@@ -56,6 +60,9 @@ def initial_process(id, data = None):
         return fail('JOBS_NO_ATTACHMENT_FOUND', job, db)
 
     if file_extension == '.docx' or file_extension == '.doc':
+
+        if not os.environ.get('SERVEOFFICE2PDF_URL'):
+            return fail('JOBS_NO_SERVEOFFICE2PDF', job, db)
 
         try:
             save_local_file(job.access_key, job.filename, data)
@@ -162,7 +169,7 @@ def initial_process(id, data = None):
         job.status = 'queued'
         session.commit()
         redis_conn = redis.from_url(os.environ.get('REDIS_URI'))
-        q = Queue(connection=redis_conn)
+        q = Queue('default', connection=redis_conn)
         q.enqueue_call(func=send_fax, args=(id,), timeout=600)
     else:
         job.status = 'ready'
@@ -199,51 +206,52 @@ def send_fax(id):
     #   MAKE SURE THE CUSTOMER ACTUALLY HAS MONEY PHASE
     ########################################################################
 
-    if job.account.credit - cost < 0 and not job.account.allow_overflow:
-        if job.account.stripe_card and job.account.auto_recharge:
-            try:
-                charge = stripe.Charge.create(
-                    amount=1000,
-                    currency="usd",
-                    customer=job.account.stripe_token,
-                    description="Auto-recharging account %s"% job.account.id
-                )
-                data = {
-                    'account_id':       job.account.id,
-                    'amount':           10,
-                    'source':           'stripe',
-                    'source_id':        charge["id"],
-                    'job_id':           job.id,
-                    'job_destination':  job.destination,
-                    'ip_address':       job.ip_address,
-                    'initial_balance':  job.account.credit,
-                    'trans_type':       'auto_recharge'
-                }
-                trans = Transaction(**data)
-                session.add(trans)
-                session.commit()
+    if os.environ.get('REQUIRE_PAYMENTS') == 'on':
+        if job.account.credit - cost < 0 and not job.account.allow_overflow:
+            if job.account.stripe_card and job.account.auto_recharge:
+                try:
+                    charge = stripe.Charge.create(
+                        amount=1000,
+                        currency="usd",
+                        customer=job.account.stripe_token,
+                        description="Auto-recharging account %s"% job.account.id
+                    )
+                    data = {
+                        'account_id':       job.account.id,
+                        'amount':           10,
+                        'source':           'stripe',
+                        'source_id':        charge["id"],
+                        'job_id':           job.id,
+                        'job_destination':  job.destination,
+                        'ip_address':       job.ip_address,
+                        'initial_balance':  job.account.credit,
+                        'trans_type':       'auto_recharge'
+                    }
+                    trans = Transaction(**data)
+                    session.add(trans)
+                    session.commit()
 
-                job.account.add_credit(10, session)
-                email_recharge_payment(job.account, 10, trans.id,
-                    charge.source.last4)
+                    job.account.add_credit(10, session)
+                    email_recharge_payment(job.account, 10, trans.id,
+                        charge.source.last4)
 
-            except:
-                payment = {'_DEBUG': traceback.format_exc()}
-                data = {
-                    'amount':       10,
-                    'account_id':   job.account.id,
-                    'source':       'stripe',
-                    'debug':        json.dumps(payment),
-                    'ip_address':   job.ip_address,
-                    'payment_type': 'auto_recharge'
-                }
-                failed_payment = FailedPayment(**data)
-                session.add(failed_payment)
-                session.commit()
-                # JL TODO ~ Notify customer that the card was declined
-                return fail('JOBS_CARD_DECLINED', job, db)    
-        else:
-            return fail('JOBS_INSUFFICIENT_CREDIT', job, db)
+                except:
+                    payment = {'_DEBUG': traceback.format_exc()}
+                    data = {
+                        'amount':       10,
+                        'account_id':   job.account.id,
+                        'source':       'stripe',
+                        'debug':        json.dumps(payment),
+                        'ip_address':   job.ip_address,
+                        'payment_type': 'auto_recharge'
+                    }
+                    failed_payment = FailedPayment(**data)
+                    session.add(failed_payment)
+                    session.commit()
+                    # JL TODO ~ Notify customer that the card was declined
+                    return fail('JOBS_CARD_DECLINED', job, db)    
+            else:
+                return fail('JOBS_INSUFFICIENT_CREDIT', job, db)
 
     job.mod_date = datetime.now()
     job.start_date = datetime.now()
@@ -445,7 +453,7 @@ def send_fax(id):
     try:
         o('Modem dialing: 1%s' % job.destination)
 
-        cmd = ["efax", "-d", "/dev/ttyUSB0", "-oflll ", "-t",
+        cmd = ["efax", "-d", device, "-oflll ", "-t",
                "1%s" % job.destination]
         cmd.extend(files_to_send)
         output = check_output(cmd, stderr=STDOUT)
@@ -456,9 +464,10 @@ def send_fax(id):
         output = str(e.output)
 
         if "No Answer" in output:
-            o('No answer. Charge the customer anyway for wasting our time.')
-            o('Debiting $%s on account ID %s' % (cost, job.account.id))
-            commit_transaction(job, cost, 'no_answer_charge')            
+            if os.environ.get('REQUIRE_PAYMENTS') == 'on':
+                o('No answer. Charge the customer anyway for wasting our time.')
+                o('Debiting $%s on account ID %s' % (cost, job.account.id))
+                commit_transaction(job, cost, 'no_answer_charge')            
 
             return fail('JOBS_TRANSMIT_NO_ANSWER', job, db, output)
 
@@ -486,8 +495,9 @@ def send_fax(id):
     if job.callback_url:
         send_job_callback(job, db)
 
-    o('Debiting $%s on account ID %s' % (cost, job.account.id))
-    commit_transaction(job, cost, 'job_complete')
+    if os.environ.get('REQUIRE_PAYMENTS') == 'on':
+        o('Debiting $%s on account ID %s' % (cost, job.account.id))
+        commit_transaction(job, cost, 'job_complete')
 
 def o(output):
     if DEBUG_MODE:

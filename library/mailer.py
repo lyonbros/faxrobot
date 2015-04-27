@@ -1,8 +1,8 @@
-import mandrill
 import os
 
-client = mandrill.Mandrill(os.environ.get('MANDRILL_API_KEY'))
 base_url = os.environ.get('FAXROBOT_URL')
+email_support = os.environ.get('EMAIL_SUPPORT')
+email_feedback = os.environ.get('EMAIL_FEEDBACK')
 
 def email_registration(account):
     message = {
@@ -27,8 +27,9 @@ def email_password_change(account):
         'subject': 'Fax Robot password changed',
         'html': ('<p>Just a heads up: your Fax Robot password was changed.</p>'
                  '<p>If you weren\'t aware of this, please email '
-                 '<a href="mailto:support@faxrobot.io">support@faxrobot.io</a> '
-                 'as soon as possible.</p><p>--Fax Robot</p>')
+                 '<a href="mailto:%s">%s</a> '
+                 'as soon as possible.</p><p>--Fax Robot</p>') % (email_support,
+                 email_support)
     }
     send_email(message, account)
 
@@ -37,8 +38,9 @@ def email_api_key_change(account):
         'subject': 'Fax Robot API key changed',
         'html': ('<p>Just a heads up: your Fax Robot API key was changed.</p>'
                  '<p>If you weren\'t aware of this, please email '
-                 '<a href="mailto:support@faxrobot.io">support@faxrobot.io</a> '
-                 'as soon as possible.</p><p>--Fax Robot</p>')
+                 '<a href="mailto:%s">%s</a> '
+                 'as soon as possible.</p><p>--Fax Robot</p>') % (email_support,
+                 email_support)
     }
     send_email(message, account)
 
@@ -54,10 +56,11 @@ def email_payment(account, charged, transaction_id, payment_last4,
                 'time, without worrying about monthly subscription fees. We '
                 'hope you enjoy using the service. If you have any questions '
                 'or feedback, please email '
-                '<a href="mailto:human@faxrobot.io">human@faxrobot.io</a>.</p>'
+                '<a href="mailto:%s">%s</a>.</p>'
                 '<p>You can log into your account at '
                 '<a href="%s/accounts/login">%s/accounts/login</a>.') % (
-                temporary_password, base_url, base_url)
+                temporary_password, email_feedback, email_feedback, base_url,
+                base_url)
         subject = 'Welcome to Fax Robot! Here\'s your receipt.'
     else:
         html = '<h2>Thanks for being a Fax Robot customer!</h2>'
@@ -126,13 +129,14 @@ def email_fail(job, msg, code, status):
                  '<strong>Error:</strong> %s (Code %s)<br/>'
                  '<strong>Date:</strong> %s<br/></p>'
                  '<p>If you\'re having trouble, please email '
-                 '<a href="mailto:support@faxrobot.io">support@faxrobot.io</a> '
+                 '<a href="mailto:%s">%s</a> '
                  'and we\'ll do our best to help.</p><p>To change your email '
                  'notification preferences, visit '
                  '<a href="%s/account">%s/account</a>.</p><p>--Fax Robot</p>'
                  ) % (base_url, job.access_key, job.id, job.destination,
                  'Internal error' if status == 'internal_error' else msg,
-                 code, datetime.now().strftime('%B %d, %Y'), base_url, base_url)
+                 code, datetime.now().strftime('%B %d, %Y'), email_support,
+                 email_support, base_url, base_url)
     }
     send_email(message, account)
 
@@ -162,17 +166,24 @@ def email_password_reset(email, password_reset, account):
                  'below:</p><p><a href="%s/reset/%s">%s/reset/%s</a></p><p>If '
                  'you weren\'t expecting this email, or weren\'t trying to '
                  'reset your password, please contact '
-                 '<a href="mailto:support@faxrobot.io">support@faxrobot.io</a>'
+                 '<a href="mailto:%s">%s</a>'
                  '</p><p>--Fax Robot</p>'
                  ) % (base_url, password_reset.reset_hash, base_url, 
-                 password_reset.reset_hash)
+                 password_reset.reset_hash, email_support, email_support)
     }
     send_email(message, account)
 
 def send_email(message, account = None):
+
+    if not os.environ.get('MANDRILL_API_KEY'):
+        return False
+
+    import mandrill
+    client = mandrill.Mandrill(os.environ.get('MANDRILL_API_KEY'))
+
     message['from_email'] = os.environ.get('EMAIL_FROM')
     message['from_name'] = os.environ.get('EMAIL_FROM_NAME')
-
+    
     if account:
         if account.first_name and account.last_name:
             message['to'] = [{

@@ -323,6 +323,11 @@ worker_errors = {
         "status": "not_ready",
         "msg": "The job is not ready for sending."
     },
+    "JOBS_NO_SERVEOFFICE2PDF": {
+        "code": 525,
+        "status": "processing_error",
+        "msg": "No suitable converter specified for exporting Office to PDF."
+    },
 }
 
 def api_error(ref):
