@@ -161,7 +161,8 @@ def update():
         if v('stripe_token') and v('last4'):
             try:
                 customer = stripe.Customer.create(
-                    description="Fax Robot customer %s" % account.id,
+                    description="%s Customer %s" % (
+                        os.environ.get('PROJECT_NAME'), account.id),
                     email=account.email,
                     source=v('stripe_token') # 'trol'
                 )

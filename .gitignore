@@ -2,3 +2,4 @@ venv
 .env
 tmp
 *.pyc
+uwsgi.ini

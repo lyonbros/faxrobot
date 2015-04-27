@@ -77,6 +77,7 @@ export FAXROBOT_DIR=/htdocs/faxrobot
 export GLOBAL_SALT=omgtrolol
 export STRIPE_SECRET_KEY=sk_test_12345678
 export SERVEOFFICE2PDF_URL=http://convert.dev/convert
+export PROJECT_NAME='Fax Robot'
 export MANDRILL_API_KEY=asdf
 export EMAIL_FROM='support@faxrobot.io'
 export EMAIL_FROM_NAME='Fax Robot'
@@ -126,7 +127,9 @@ Here are the specific environment variables, and what they do:
 * **`SERVEOFFICE2PDF_URL`**: ServeOffice2PDF is a separate web application that
   converts Microsoft Office file formats (like .doc and .docx) to PDF. This is
   optional, and only used to support faxing these formats via the Fax Robot API.
-  By default Microsoft Office formats are unsupported by Fax Robot.
+  By default Microsoft Office formats are unsupported.
+
+* **`PROJECT_NAME`**: The name you're giving to your instance of the project.
 
 * **`MANDRILL_API_KEY`**: Used for sending transactional emails to Fax Robot API
   accounts. If not present, then emails are disabled.
