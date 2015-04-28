@@ -3,3 +3,4 @@ venv
 tmp
 *.pyc
 uwsgi.ini
+log
