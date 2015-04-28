@@ -38,11 +38,9 @@ Dependencies
 Installation
 ------------
 There are two pieces to Fax Robot: a Python Flask API and the worker process
-that actually runs through the queue and sends the faxes. How you run the API in
-production will vary depending on your hosting infrastructure. This section will
-explain how to test the API on your local machine (production is left as an
-exercise to the reader). Setting up the worker process is a bit easier, and
-always the same whether you're testing or in production.
+that actually runs through the queue and sends the faxes. How you run these in
+production will vary depending on your hosting infrastructure (production
+deployment is left as an exercise to the reader), but local testing is easy.
 
 #### Set up your Virtualenv and packages
 
