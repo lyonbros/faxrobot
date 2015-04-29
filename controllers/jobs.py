@@ -9,6 +9,7 @@ from rq import Queue
 from redis import Redis
 from workers.jobs import initial_process, send_fax
 from datetime import datetime
+import sys
 
 jobs = Blueprint('jobs', __name__, url_prefix='/jobs')
 
