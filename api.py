@@ -3,6 +3,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 from flask.ext.cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from models import db
+import sys
 
 app = Flask(__name__)
 cors = CORS(app, allow_headers='Content-Type, Origin, Accept')
@@ -26,7 +27,7 @@ app.register_blueprint(accounts_module)
 
 if __name__ == '__main__':
     if app.config['DEBUG'] == True:
-        print 'Running locally in debug mode.'
+        print >> sys.stderr, 'Running locally in debug mode.'
         app.run('0.0.0.0', 9001)
     else:
         app.run()

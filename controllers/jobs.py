@@ -56,7 +56,7 @@ def create():
             else:
                 data['body']        = v('body')
 
-            print data
+            print >> sys.stderr, data
 
             try:
                 job = Job(**data);
