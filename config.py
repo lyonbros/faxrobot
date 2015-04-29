@@ -8,3 +8,4 @@ class Config(object):
     SQLALCHEMY_POOL_RECYCLE = 60 * 60
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI')
     REDIS_URI = os.environ.get('REDIS_URI')
+    PROPAGATE_EXCEPTIONS = True
