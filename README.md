@@ -30,6 +30,7 @@ Dependencies
 * Redis
 * ImageMagick (particularly the `convert` and `composite` commands)
 * [paps][8]
+* [efax][9] (the linux command to send faxes)
 * (Optional) [Stripe API][2], only needed if you're collecting payments.
 * (Optional) [Mandrill API][5], for sending account-related emails to
   API users.
@@ -201,3 +202,4 @@ API Documentation
 [6]: https://virtualenv.pypa.io/en/latest/
 [7]: https://github.com/lyonbros/faxrobot-www
 [8]: http://linux.die.net/man/1/paps
+[9]: http://linux.die.net/man/1/efax
