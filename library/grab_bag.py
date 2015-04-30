@@ -1,3 +1,5 @@
+import sys
+
 def fix_ip(ip_address):
     """Fixes an ugly, broken IP address string that came from Heroku"""
 
@@ -18,3 +20,6 @@ def password_hash(password):
     import hashlib, os
     _str = "%s%s" % (password, os.environ.get('GLOBAL_SALT'))
     return hashlib.sha256(_str).hexdigest()
+
+def o(output):
+    print >> sys.stderr, output

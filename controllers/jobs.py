@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, request, render_template, jsonify, current_app
 from models import db
-from library.grab_bag import fix_ip
+from library.grab_bag import fix_ip, o
 from library.errors import api_error, ValidationError
 from models.job import Job
 from models.account import Account
@@ -9,7 +9,6 @@ from rq import Queue
 from redis import Redis
 from workers.jobs import initial_process, send_fax
 from datetime import datetime
-import sys
 
 jobs = Blueprint('jobs', __name__, url_prefix='/jobs')
 
@@ -57,7 +56,7 @@ def create():
             else:
                 data['body']        = v('body')
 
-            print >> sys.stderr, data
+            o(data)
 
             try:
                 job = Job(**data);

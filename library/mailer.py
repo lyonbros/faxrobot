@@ -1,4 +1,5 @@
 import os
+from library.grab_bag import o
 
 base_url = os.environ.get('FAXROBOT_URL')
 email_support = os.environ.get('EMAIL_SUPPORT')
@@ -199,4 +200,4 @@ def send_email(message, account = None):
     try:
         client.messages.send(message=message, async=True)
     except mandrill.Error, e:
-        print 'A mandrill error occurred: %s - %s' % (e.__class__, e)
+        o('A mandrill error occurred: %s - %s' % (e.__class__, e))

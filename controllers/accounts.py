@@ -4,7 +4,7 @@ from models import db
 from sqlalchemy.exc import IntegrityError
 from rq import Queue
 from redis import Redis
-from library.grab_bag import fix_ip, password_hash, random_hash
+from library.grab_bag import fix_ip, password_hash, random_hash, o
 from library.errors import api_error, ValidationError
 from models.account import Account
 from models.transaction import Transaction
@@ -282,21 +282,21 @@ def bootstrap():
         emails = Account.query.filter_by(email=v('email'))
         account = emails.first()
 
-        print "Received bootstrap payment login: %s" % v('email')
+        o("Received bootstrap payment login: %s" % v('email'))
 
         if account_id and account != None and account.id != account_id:
-            print "Account exists but user is logged in as someone else. Error."
+            o("Account exists but user is logged in as someone else. Error.")
             return jsonify(api_error('ACCOUNTS_LOGIN_ERROR')), 401
             
         if account != None and account.password != password_hash(v('password'))\
                 and not account_id:
-            print "Account exists but password mismatch. Erroring out."
+            o("Account exists but password mismatch. Erroring out.")
             return jsonify(api_error('ACCOUNTS_LOGIN_ERROR')), 401
 
         temporary_password = None
 
         if account == None:
-            print "Creating account with temporary password."
+            o("Creating account with temporary password.")
             temporary_password = random_hash(v('email'))[:8]
             data = {
                 'email':        v('email'),
@@ -313,7 +313,7 @@ def bootstrap():
             except IntegrityError:
                 return jsonify(api_error('ACCOUNTS_CREATE_FAIL')), 400
 
-        print "Verifying payment with Stripe API."
+        o("Verifying payment with Stripe API.")
         failed = False
 
         try:
@@ -324,14 +324,14 @@ def bootstrap():
                 description="Bootstrap payment"
             )
         except:
-            print "STRIPE UNEXPECTED ERROR:", sys.exc_info()[0]
+            o("STRIPE UNEXPECTED ERROR:", sys.exc_info()[0])
             failed = True
             payment = {'_DEBUG': traceback.format_exc()}
 
-        print payment
+        o(payment)
 
         if not failed and payment and payment.status == "succeeded":
-            print "Payment success."
+            o("Payment success.")
             db.session.commit()
             data = {
                 'account_id':       account.id,
@@ -346,14 +346,14 @@ def bootstrap():
             db.session.add(trans)
             db.session.commit()
 
-            print "Adding credit to account."
+            o("Adding credit to account.")
             charged = float(payment.amount) / float(100)
             account.add_credit(charged)
             email_payment(account, charged, trans.id, payment.source.last4,
                     temporary_password)
 
         else:
-            print "--- PAYMENT FAIL. LOGGING INFO ---"
+            o("--- PAYMENT FAIL. LOGGING INFO ---")
             db.session.expunge_all()
             data = {
                 'amount':       v('amount'),

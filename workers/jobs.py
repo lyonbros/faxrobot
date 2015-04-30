@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from library.errors import worker_error
+from library.grab_bag import o
 from models.job import Job
 from models.transaction import Transaction
 from models.failed_payment import FailedPayment
@@ -12,8 +13,6 @@ from models.failed_payment import FailedPayment
 engine = create_engine(os.environ.get('DATABASE_URI').strip())
 Session = sessionmaker(bind=engine)
 session = Session()
-
-DEBUG_MODE = True
 
 # JL TODO ~ Fix this horrible hack. MODEM_DEVICE is set in worker.py by
 # modifying Pythons __builtin__ namespace. There has to be a better way.
@@ -499,10 +498,6 @@ def send_fax(id):
         o('Debiting $%s on account ID %s' % (cost, job.account.id))
         commit_transaction(job, cost, 'job_complete')
 
-def o(output):
-    if DEBUG_MODE:
-        print output
-
 def commit_transaction(job, cost, trans_type, note = None):
     data = {
         'account_id':       job.account.id,
@@ -547,7 +542,6 @@ def convert_txt_to_ps(access_key, filename):
     o('Convert %s to .ps' % filename) ########################################
 
     file_prefix, file_extension = os.path.splitext(filename)
-    print file_prefix
 
     command = [
         "paps",

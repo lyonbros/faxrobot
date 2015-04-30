@@ -5,7 +5,7 @@ from sqlalchemy import func, Column, BigInteger, SmallInteger, Integer, \
     String, Float, DateTime, ForeignKey, Text
 from sqlalchemy.orm.session import Session
 from sqlalchemy.exc import SQLAlchemyError
-from library.grab_bag import random_hash
+from library.grab_bag import random_hash, o
 from library.errors import ValidationError
 
 class Job(db.Model):
@@ -141,7 +141,7 @@ class Job(db.Model):
                                     os.environ.get('AWS_SECRET_KEY'))
                 bucket = conn.get_bucket(os.environ.get('AWS_S3_BUCKET'))
             except:
-                print "COULD NOT CONNECT TO S3 WTF WTF WTF WTF"
+                o("COULD NOT CONNECT TO S3 WTF WTF WTF WTF")
                 return
 
             try:
@@ -153,7 +153,7 @@ class Job(db.Model):
                     k.delete()
 
             except:
-                print "COULD NOT DELETE FILES FROM S3 OMG SHIT"
+                o("COULD NOT DELETE FILES FROM S3 OMG SHIT")
 
         return True
 
