@@ -29,6 +29,7 @@ Dependencies
 * PostgreSQL
 * Redis
 * ImageMagick (particularly the `convert` and `composite` commands)
+* [paps][8]
 * (Optional) [Stripe API][2], only needed if you're collecting payments.
 * (Optional) [Mandrill API][5], for sending account-related emails to
   API users.
@@ -67,6 +68,7 @@ export SECRET_KEY=asdf1234
 export DATABASE_URI=postgres://username:password@localhost/faxrobot
 export REDIS_URI=redis://127.0.0.1:6379?db=1
 export REQUIRE_PAYMENTS=on
+export DEFAULT_COST_PER_PAGE=0.06
 export AWS_STORAGE=off
 export AWS_ACCESS_KEY=AKSPLGHLOL
 export AWS_SECRET_KEY='trolol'
@@ -97,6 +99,9 @@ Here are the specific environment variables, and what they do:
 
 * **`REDIS_URI` (required)**: A Redis connection string. Required for the
   [rq][1] worker to operate.
+
+* **`DEFAULT_COST_PER_PAGE`**: The default cost per page in USD to charge for
+  outgoing faxes. The default is 0.06.
 
 * **`REQUIRE_PAYMENTS`**: If set to "on" then API users will need to purchase
   credit via [Stripe][2] API endpoints in order to send faxes. This also means
@@ -195,3 +200,4 @@ API Documentation
 [5]: http://mandrill.com
 [6]: https://virtualenv.pypa.io/en/latest/
 [7]: https://github.com/lyonbros/faxrobot-www
+[8]: http://linux.die.net/man/1/paps

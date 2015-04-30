@@ -6,6 +6,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from validate_email import validate_email
 from library.grab_bag import random_hash, password_hash
 from library.errors import ValidationError
+import os
+
+default_cost_per_page = float(os.environ.get('DEFAULT_COST_PER_PAGE', '0.06'))
 
 class Account(db.Model):
     __tablename__ = 'account'
@@ -15,7 +18,7 @@ class Account(db.Model):
     password        = Column(String(64), nullable=False)
     api_key         = Column(String(64), nullable=False,unique=True,index=True)
     credit          = Column(Float, default=0.00)
-    base_rate       = Column(Float, default=0.06)
+    base_rate       = Column(Float, default=default_cost_per_page)
     allow_overflow  = Column(SmallInteger, default=0)
     first_name      = Column(String(255))
     last_name       = Column(String(255))

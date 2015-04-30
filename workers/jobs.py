@@ -129,11 +129,16 @@ def initial_process(id, data = None):
         if file_extension == '.tiff':
             num_pages = num_pages + 1
 
+    if job.account.base_rate:
+        cost_per_page = job.account.base_rate
+    else:
+        cost_per_page = float(os.environ.get('DEFAULT_COST_PER_PAGE', '0.06'))
+
     job.status = 'processing'
     job.mod_date = datetime.now()
     job.num_pages = num_pages
-    job.cost = job.account.base_rate * num_pages
-    job.cover_cost = job.account.base_rate
+    job.cost = cost_per_page * num_pages
+    job.cover_cost = cost_per_page
     session.commit()
 
     ########################################################################
