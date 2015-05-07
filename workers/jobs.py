@@ -457,7 +457,7 @@ def send_fax(id):
     try:
         o('Modem dialing: 1%s' % job.destination)
 
-        cmd = ["efax", "-d", device, "-oflll ", "-t",
+        cmd = ["efax", "-d", device, "-of ", "-t",
                "1%s" % job.destination]
         cmd.extend(files_to_send)
         output = check_output(cmd, stderr=STDOUT)
