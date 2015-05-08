@@ -14,10 +14,6 @@ engine = create_engine(os.environ.get('DATABASE_URI').strip())
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# JL TODO ~ Fix this horrible hack. MODEM_DEVICE is set in worker.py by
-# modifying Pythons __builtin__ namespace. There has to be a better way.
-device = MODEM_DEVICE if 'MODEM_DEVICE' in globals() else '/dev/ttyUSB0'
-
 def initial_process(id, data = None):
 
     from boto.s3.connection import S3Connection
@@ -193,6 +189,9 @@ def send_fax(id):
     import traceback
     import json
     from library.mailer import email_recharge_payment, email_success
+    from rq import Worker
+
+    device = Worker.MODEM_DEVICE
 
     stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
