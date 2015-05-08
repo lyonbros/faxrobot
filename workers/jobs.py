@@ -457,7 +457,7 @@ def send_fax(id):
     try:
         o('Modem dialing: 1%s' % job.destination)
 
-        cmd = ["efax", "-d", device, "-of ", "-t",
+        cmd = ["efax", "-d", device, "-oflll ", "-t",
                "1%s" % job.destination]
         cmd.extend(files_to_send)
         output = check_output(cmd, stderr=STDOUT)
@@ -535,7 +535,7 @@ def convert_to_tiff(access_key, filename):
         "-density",
         "200 ",
         "./tmp/" + access_key + "/" + filename,
-        "-flatten", # lol
+        # "-flatten", # lol
         "fax:./tmp/" + access_key + "/"+ file_prefix +".%02d.tiff"
     ]
     output = check_output(command)
