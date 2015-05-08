@@ -17,7 +17,7 @@ import __builtin__
 __builtin__.MODEM_DEVICE = args.device[0] if args.device else '/dev/ttyUSB0'
 
 
-print "Binding to modem device: " + MODEM_DEVICE
+print >> sys.stderr, "Binding to modem device: " + MODEM_DEVICE
 
 conn = redis.from_url(os.environ.get('REDIS_URI'))
 
