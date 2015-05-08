@@ -1,7 +1,7 @@
 import os
 import redis
 from rq import Worker, Queue, Connection
-
+import sys
 import argparse
 
 parser = argparse.ArgumentParser(description='Run the Fax Robot Worker.')
