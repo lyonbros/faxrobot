@@ -533,6 +533,8 @@ def convert_to_tiff(access_key, filename):
         "convert",
         "-density",
         "200 ",
+        "-resize",
+        "1700x2200 ",
         "./tmp/" + access_key + "/" + filename,
         # "-flatten", # lol
         "fax:./tmp/" + access_key + "/"+ file_prefix +".%02d.tiff"
