@@ -185,7 +185,8 @@ python worker.py --device /dev/ttyUSB0
 ```
 
 **NOTE:** The device for your faxmodem must be accessible by the user account
-you're running the `worker.py` process under.
+you're running the `worker.py` process under. (hint: add your user account to
+the `dialout` group)
 
 If you have more than one faxmodem hooked up, you can run multiple instances of
 `worker.py` for maximum pwnage.
