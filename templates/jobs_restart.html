@@ -1,0 +1,119 @@
+<html>
+<head>
+<title>Create a Job (TEST)</title>
+<style type="text/css">
+label { display: inline-block; width: 150px; vertical-align: top; }
+textarea { width: 50%; height: 400px; }
+</style>
+</head>
+<body>
+<h1>Create a Job (TEST)</h1>
+<p>This is really just for testing. We shouldn't ever actually use this.</p>
+<form method="post" action="/jobs/create" enctype="multipart/form-data">
+<label for="file">file:</label>
+<input type="file" name="file" id="file"/>
+<br/>
+<label for="body">body:</label>
+<textarea name="body" id="body">Today I was Snowed in
+
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄░░░░░░░░░
+░░░░░░░░▄▀░░░░░░░░░░░░▄░░░░░░░▀▄░░░░░░░
+░░░░░░░░█░░▄░░░░▄░░░░░░░░░░░░░░█░░░░░░░
+░░░░░░░░█░░░░░░░░░░░░▄█▄▄░░▄░░░█░▄▄▄░░░
+░▄▄▄▄▄░░█░░░░░░▀░░░░▀█░░▀▄░░░░░█▀▀░██░░
+░██▄▀██▄█░░░▄░░░░░░░██░░░░▀▀▀▀▀░░░░██░░
+░░▀██▄▀██░░░░░░░░▀░██▀░░░░░░░░░░░░░▀██░
+░░░░▀████░▀░░░░▄░░░██░░░▄█░░░░▄░▄█░░██░
+░░░░░░░▀█░░░░▄░░░░░██░░░░▄░░░▄░░▄░░░██░
+░░░░░░░▄█▄░░░░░░░░░░░▀▄░░▀▀▀▀▀▀▀▀░░▄▀░░
+░░░░░░█▀▀█████████▀▀▀▀████████████▀░░░░
+░░░░░░████▀░░███▀░░░░░░▀███░░▀██▀░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+</textarea>
+<br/>
+<label for="send_authorized">send_authorized:</label>
+<select name="send_authorized" id="send_authorized">
+    <option value="0">No</option>
+    <option value="1">Yes</option>
+</select>
+<br/>
+<label for="api_key">api_key:</label>
+<input type="text" name="api_key" id="api_key" value="6a292b088795e33f2255180e0b26dfc827b6af9e5a15c271db12ee151d3fcbc2"/>
+<br/>
+<label for="destination">destination:</label>
+<input type="text" name="destination" id="destination" value="6129268168"/>
+<br/>
+<label for="cover">cover:</label>
+<select name="cover" id="cover">
+    <option value="0">No</option>
+    <option value="1" selected>Yes</option>
+</select>
+<br/>
+<label for="cover_name">cover_name:</label>
+<input type="text" name="cover_name" id="cover_name" value="Jeff Lyon"/>
+<br/>
+<label for="cover_address">cover_address:</label>
+<input type="text" name="cover_address" id="cover_address" value="123 Main Street"/>
+<br/>
+<label for="cover_city">cover_city:</label>
+<input type="text" name="cover_city" id="cover_city" value="Minneapolis"/>
+<br/>
+<label for="cover_state">cover_state:</label>
+<input type="text" name="cover_state" id="cover_state" value="MN"/>
+<br/>
+<label for="cover_zip">cover_zip:</label>
+<input type="text" name="cover_zip" id="cover_zip" value="55419"/>
+<br/>
+<label for="cover_country">cover_country:</label>
+<input type="text" name="cover_country" id="cover_country" value=""/>
+<br/>
+<label for="cover_phone">cover_phone:</label>
+<input type="text" name="cover_phone" id="cover_phone" value="650-555-1234"/>
+<br/>
+<label for="cover_email">cover_email:</label>
+<input type="text" name="cover_email" id="cover_email" value="jeff@lyonbros.com"/>
+<br/>
+<label for="cover_company">cover_company:</label>
+<input type="text" name="cover_company" id="cover_company" value="Lyon Bros. Enterprises, LLC."/>
+<br/>
+<label for="cover_to_name">cover_to_name:</label>
+<input type="text" name="cover_to_name" id="cover_to_name" value="Zetsubou Billy"/>
+<br/>
+<label for="cover_cc">cover_cc:</label>
+<input type="text" name="cover_cc" id="cover_cc" value="Yagami Light"/>
+<br/>
+<label for="cover_subject">cover_subject:</label>
+<input type="text" name="cover_subject" id="cover_subject" value="Let's create a new world"/>
+<br/>
+<label for="cover_status">cover_status:</label>
+<input type="text" name="cover_status" id="cover_status" value="review|shred"/>
+<br/>
+<label for="cover_comments">cover_comments:</label>
+<textarea name="cover_comments" id="cover_comments">Oof said I
+
+I said oof. Trololol
+
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄░░░░░░░░░
+░░░░░░░░▄▀░░░░░░░░░░░░▄░░░░░░░▀▄░░░░░░░
+░░░░░░░░█░░▄░░░░▄░░░░░░░░░░░░░░█░░░░░░░
+░░░░░░░░█░░░░░░░░░░░░▄█▄▄░░▄░░░█░▄▄▄░░░
+░▄▄▄▄▄░░█░░░░░░▀░░░░▀█░░▀▄░░░░░█▀▀░██░░
+░██▄▀██▄█░░░▄░░░░░░░██░░░░▀▀▀▀▀░░░░██░░
+░░▀██▄▀██░░░░░░░░▀░██▀░░░░░░░░░░░░░▀██░
+░░░░▀████░▀░░░░▄░░░██░░░▄█░░░░▄░▄█░░██░
+░░░░░░░▀█░░░░▄░░░░░██░░░░▄░░░▄░░▄░░░██░
+░░░░░░░▄█▄░░░░░░░░░░░▀▄░░▀▀▀▀▀▀▀▀░░▄▀░░
+░░░░░░█▀▀█████████▀▀▀▀████████████▀░░░░
+░░░░░░████▀░░███▀░░░░░░▀███░░▀██▀░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+</textarea>
+<br/>
+<label for="callback_url">callback_url:</label>
+<input type="text" name="callback_url" id="callback_url" value="http://test.dev/echo_post.php"/>
+<hr/>
+<input type="submit" value="Submit"/>
+</form>
+</body>
+</html>

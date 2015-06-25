@@ -244,7 +244,7 @@ def restart(access_key):
     db.session.commit()
     redis_conn = Redis.from_url(os.environ.get('REDIS_URI'))
     q = Queue(connection=redis_conn)
-    q.enqueue_call(func=send_fax, args=(job.id,), timeout=600)
+    q.enqueue_call(func=send_fax, args=(job.id,), timeout=3600)
 
     return jsonify(job.public_data())
 
