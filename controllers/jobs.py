@@ -178,7 +178,7 @@ def update(access_key):
             db.session.commit()
             redis_conn = Redis.from_url(os.environ.get('REDIS_URI'))
             q = Queue('default', connection=redis_conn)
-            q.enqueue_call(func=send_fax, args=(job.id,), timeout=600)
+            q.enqueue_call(func=send_fax, args=(job.id,), timeout=3600)
         else:
             db.session.commit()
 

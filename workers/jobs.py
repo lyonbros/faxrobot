@@ -170,7 +170,7 @@ def initial_process(id, data = None):
         session.commit()
         redis_conn = redis.from_url(os.environ.get('REDIS_URI'))
         q = Queue('default', connection=redis_conn)
-        q.enqueue_call(func=send_fax, args=(id,), timeout=600)
+        q.enqueue_call(func=send_fax, args=(id,), timeout=3600)
     else:
         job.status = 'ready'
         session.commit()
