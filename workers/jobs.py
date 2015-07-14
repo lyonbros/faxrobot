@@ -96,6 +96,18 @@ def initial_process(id, data = None):
         except CalledProcessError, e:
             return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
 
+    elif file_extension == '.png' or file_extension == '.jpg':
+
+        try:
+            save_local_file(job.access_key, job.filename + file_extension, data)
+        except:
+            return fail('JOBS_LOCAL_SAVE_FAIL', job, db)
+
+        try:
+            convert_to_tiff(job.access_key, job.filename + file_extension)
+        except CalledProcessError, e:
+            return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
+
     elif file_extension == '.txt':
 
         txt_filename = job.filename if job.filename else "fax.txt"
