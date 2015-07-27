@@ -139,7 +139,8 @@ def email_fail(job, msg, code, status, debug_data=None):
             body += '<strong>Device:</strong> %s<br/>' % debug_data["device"]
 
         if debug_data["output"]:
-            body += '<strong>Output:</strong> %s<br/>' % debug_data["output"]
+            output = "<br />".join(debug_data["output"].split("\n"))
+            body += '<strong>Output:</strong> %s<br/>' % output
 
     body +=('</p><p>If you\'re having trouble, please email '
              '<a href="mailto:%s">%s</a> '
