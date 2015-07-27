@@ -10,11 +10,12 @@ parser.add_argument('--device', nargs=1, help='Modem device to use for faxing')
 
 args = parser.parse_args()
 
-listen = args.listen if args.listen else ['high', 'default', 'low']
+if args.listen:
+    listen = args.listen[0].split(',')
+else:
+    listen = ['high', 'default', 'low']
 
-# JL TODO ~ Fix this horrible hack. We should not modify Python's __builtin__.
 MODEM_DEVICE = args.device[0] if args.device else '/dev/ttyUSB0'
-
 
 print >> sys.stderr, "Binding to modem device: " + MODEM_DEVICE
 

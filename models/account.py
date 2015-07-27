@@ -34,6 +34,8 @@ class Account(db.Model):
     email_success   = Column(SmallInteger, default=1)
     email_fail      = Column(SmallInteger, default=1)
     email_list      = Column(SmallInteger, default=1)
+    debug_mode      = Column(SmallInteger, default=0)
+    low_priority    = Column(SmallInteger, default=0)
     create_date     = Column(DateTime)
     mod_date        = Column(DateTime)
 
@@ -123,6 +125,10 @@ class Account(db.Model):
             {Account.credit: Account.credit - amount}
         )
         session.commit()
+
+    def get_priority(self):
+
+        return "low" if self.low_priority else "default"
 
     # why have two nearly identical methods doing nearly exactly the same thing?
     # BECAUSE FUCK YOU. that's why.

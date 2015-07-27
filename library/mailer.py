@@ -116,30 +116,41 @@ def email_recharge_payment(account, charged, transaction_id, payment_last4):
     }
     send_email(message, account)
 
-def email_fail(job, msg, code, status):
+def email_fail(job, msg, code, status, debug_data=None):
 
     from datetime import datetime
 
     account = job.account
 
+    body = ('<p><strong><a href="%s/job/%s">Visit the fax details page to '
+             'retry.</a></strong></p><p>An error occurred while sending '
+             'your fax:</p>'
+             '<p><strong>Job ID:</strong> %s<br/>'
+             '<strong>Destination:</strong> %s<br/>'
+             '<strong>Error:</strong> %s (Code %s)<br/>'
+             '<strong>Date:</strong> %s<br/>'
+             ) % (base_url, job.access_key, job.id, job.destination,
+             'Internal error' if status == 'internal_error' else msg,
+             code, datetime.now().strftime('%B %d, %Y'))
+
+    if job.account.debug_mode and debug_data:
+
+        if debug_data["device"]:
+            body += '<strong>Device:</strong> %s<br/>' % debug_data["device"]
+
+        if debug_data["output"]:
+            body += '<strong>Output:</strong> %s<br/>' % debug_data["output"]
+
+    body +=('</p><p>If you\'re having trouble, please email '
+             '<a href="mailto:%s">%s</a> '
+             'and we\'ll do our best to help.</p><p>To change your email '
+             'notification preferences, visit '
+             '<a href="%s/account">%s/account</a>.</p><p>--%s</p>') % (
+                email_support, email_support, base_url, base_url, project)
+
     message = {
         'subject': 'Your fax could not be sent :(',
-        'html': ('<p><strong><a href="%s/job/%s">Visit the fax details page to '
-                 'retry.</a></strong></p><p>An error occurred while sending '
-                 'your fax:</p>'
-                 '<p><strong>Job ID:</strong> %s<br/>'
-                 '<strong>Destination:</strong> %s<br/>'
-                 '<strong>Error:</strong> %s (Code %s)<br/>'
-                 '<strong>Date:</strong> %s<br/></p>'
-                 '<p>If you\'re having trouble, please email '
-                 '<a href="mailto:%s">%s</a> '
-                 'and we\'ll do our best to help.</p><p>To change your email '
-                 'notification preferences, visit '
-                 '<a href="%s/account">%s/account</a>.</p><p>--%s</p>'
-                 ) % (base_url, job.access_key, job.id, job.destination,
-                 'Internal error' if status == 'internal_error' else msg,
-                 code, datetime.now().strftime('%B %d, %Y'), email_support,
-                 email_support, base_url, base_url, project)
+        'html': body
     }
     send_email(message, account)
 

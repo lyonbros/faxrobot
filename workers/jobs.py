@@ -181,7 +181,7 @@ def initial_process(id, data = None):
         job.status = 'queued'
         session.commit()
         redis_conn = redis.from_url(os.environ.get('REDIS_URI'))
-        q = Queue('default', connection=redis_conn)
+        q = Queue(job.account.get_priority(), connection=redis_conn)
         q.enqueue_call(func=send_fax, args=(id,), timeout=3600)
     else:
         job.status = 'ready'
@@ -587,6 +587,9 @@ def save_local_file(access_key, filename, data):
 def fail(ref, job, db, debug=None):
 
     from library.mailer import email_fail
+    from rq import Worker
+
+    device = Worker.MODEM_DEVICE
 
     o('JOB FAILED: %s (%s)' % (ref, debug))
 
@@ -600,7 +603,12 @@ def fail(ref, job, db, debug=None):
     session.commit()
 
     if job.account.email_fail:
-        email_fail(job, error["msg"], error["code"], error["status"])
+        email_fail(job, error["msg"], error["code"], error["status"],
+            {
+                "device": device,
+                "output": debug
+            }
+        )
 
     if job.callback_url:
         send_job_callback(job, db)

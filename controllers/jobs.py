@@ -177,7 +177,7 @@ def update(access_key):
             job.status = 'queued'
             db.session.commit()
             redis_conn = Redis.from_url(os.environ.get('REDIS_URI'))
-            q = Queue('default', connection=redis_conn)
+            q = Queue(job.account.get_priority(), connection=redis_conn)
             q.enqueue_call(func=send_fax, args=(job.id,), timeout=3600)
         else:
             db.session.commit()
@@ -243,7 +243,7 @@ def restart(access_key):
     job.status = 'queued'
     db.session.commit()
     redis_conn = Redis.from_url(os.environ.get('REDIS_URI'))
-    q = Queue(connection=redis_conn)
+    q = Queue(job.account.get_priority(), connection=redis_conn)
     q.enqueue_call(func=send_fax, args=(job.id,), timeout=3600)
 
     return jsonify(job.public_data())
