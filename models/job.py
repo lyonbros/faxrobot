@@ -22,6 +22,7 @@ class Job(db.Model):
     num_pages       = Column(Integer)
     cost            = Column(Float)
     cover_cost      = Column(Float)
+    device          = Column(String(64))
     failed          = Column(SmallInteger, default=0)
     fail_code       = Column(Integer, default=0)
     status          = Column(String(255), index=True)

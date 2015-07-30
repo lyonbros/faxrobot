@@ -271,6 +271,7 @@ def send_fax(id):
     job.mod_date = datetime.now()
     job.start_date = datetime.now()
     job.attempts = job.attempts + 1
+    job.device = device
     job.status = 'started'
     session.commit()
 
