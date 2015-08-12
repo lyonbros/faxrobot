@@ -181,15 +181,55 @@ faxmodem device specified as an argument. For example:
 ```
 source venv/bin/activate
 source .env
-python worker.py --device /dev/ttyUSB0
+python worker.py --device /dev/ttyUSB0 --callerid '+1 202 555 1212'
 ```
-
-**NOTE:** The device for your faxmodem must be accessible by the user account
-you're running the `worker.py` process under. (hint: add your user account to
-the `dialout` group)
 
 If you have more than one faxmodem hooked up, you can run multiple instances of
 `worker.py` for maximum pwnage.
+
+**worker.py command line arguments**
+
+* **`--help`**: show help message
+
+* **`--device`**: the modem device to send faxes through, eg `/dev/ttyUSB0`.
+  The device for your faxmodem must be accessible by the user account
+  you're running the `worker.py` process under. (hint: add your user account to
+  the `dialout` group)
+
+* **`--callerid`**: the caller ID string to display on outgoing faxes, in
+  international format. Some fax machines may not accept characters other than
+  numbers, space, and '+'.
+
+* **`--listen`**: which queue(s) the worker should listen to. Can be `high`,
+  `default`, or `low`, or a comma-separated list thereof, where the first
+  items in the list are prioritized more highly. See the section below on queue
+  priorities.
+
+
+#### Worker queue priorities
+
+Fax Robot uses [rq][1] to process jobs asynchronously from incoming API
+requests. These jobs are tagged by priority: `high`, `default`, and `low`. You
+should always have at least one `worker.py` instance dedicated to `high`
+priority queue items.
+
+* **`high`**: The job which does the initial cost processing and image
+  conversion for new faxes is high priority, because users will often poll the
+  fax status endpoint to see cost information before sending faxes.
+
+* **`default`**: Sending faxes is a default priority task. Each faxmodem should
+  be given its own worker process listening on the `default` queue.
+
+* **`low`**: You can optionally flag certain accounts as `low` priority by
+  editing them in the database. This allows you to prioritize outgoing faxes
+  from other accounts before sending any from the low priority accounts (if both
+  are pending at the same time). Be sure to set your fax worker instance to
+  favor `default` jobs above `low` jobs like so:
+
+  ```
+  python worker.py --listen 'default,low'
+  ```
+
 
 API Documentation
 -----------------

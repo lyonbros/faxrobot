@@ -204,6 +204,7 @@ def send_fax(id):
     from rq import Worker
 
     device = Worker.MODEM_DEVICE
+    caller_id = Worker.CALLER_ID
 
     stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
@@ -469,8 +470,8 @@ def send_fax(id):
     try:
         o('Modem dialing: 1%s' % job.destination)
 
-        cmd = ["efax", "-d", device, "-o1flll ", "-vchewmainrft ", "-t",
-               "1%s" % job.destination]
+        cmd = ["efax", "-d", device, "-o1flll ", "-vchewmainrft ", "-l",
+               caller_id, "-t", "1%s" % job.destination]
         cmd.extend(files_to_send)
         output = check_output(cmd, stderr=STDOUT)
         o('%s' % output)
