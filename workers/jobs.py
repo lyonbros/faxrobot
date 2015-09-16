@@ -558,12 +558,12 @@ def convert_to_tiff(access_key, filename, flatten = False):
             "convert",
             "-density",
             "200 ",
+            "-resize",
+            "1700x2200 ",
             "-fill",
             "white",
             "-opaque",
             "none",
-            "-resize",
-            "1700x2200 ",
             "./tmp/" + access_key + "/" + filename,
             "fax:./tmp/" + access_key + "/"+ file_prefix +".%02d.tiff"
         ]
