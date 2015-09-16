@@ -549,7 +549,7 @@ def convert_to_tiff(access_key, filename, flatten = False):
             "-density",
             "400 ",
             "-resize",
-            "1700x2200 ",
+            "1760x2200 ",
             "./tmp/" + access_key + "/" + filename,
             "fax:./tmp/" + access_key + "/"+ file_prefix +".%02d.tiff"
         ]
@@ -559,7 +559,7 @@ def convert_to_tiff(access_key, filename, flatten = False):
             "-density",
             "400 ",
             "-resize",
-            "1700x2200 ",
+            "1760x2200 ",
             "-background",
             "White",
             "-alpha",
