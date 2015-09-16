@@ -24,7 +24,11 @@ def create():
 
     if request.method == 'POST':
 
-        uploaded_file = request.files['file']
+        if request.files and 'file' in request.files:
+            uploaded_file = request.files['file']
+        else:
+            uploaded_file = None
+            
         v = request.values.get
 
         if uploaded_file or v('body'):
