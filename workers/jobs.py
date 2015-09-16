@@ -547,7 +547,7 @@ def convert_to_tiff(access_key, filename, flatten = False):
         command = [
             "convert",
             "-density",
-            "200 ",
+            "400 ",
             "-resize",
             "1700x2200 ",
             "./tmp/" + access_key + "/" + filename,
@@ -557,7 +557,7 @@ def convert_to_tiff(access_key, filename, flatten = False):
         command = [
             "convert",
             "-density",
-            "200 ",
+            "400 ",
             "-resize",
             "1700x2200 ",
             "-background",
