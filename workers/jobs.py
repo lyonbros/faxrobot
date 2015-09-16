@@ -121,7 +121,7 @@ def initial_process(id, data = None):
             return fail('JOBS_TXT_CONVERT_FAIL', job, db, str(e))
 
         try:
-            convert_to_tiff(job.access_key, txt_filename + ".ps")
+            convert_to_tiff(job.access_key, txt_filename + ".ps", True)
         except CalledProcessError, e:
             return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
 
@@ -535,7 +535,7 @@ def commit_transaction(job, cost, trans_type, note = None):
 
     job.account.subtract_credit(cost, session)
 
-def convert_to_tiff(access_key, filename):
+def convert_to_tiff(access_key, filename, flatten = False):
 
     from subprocess import check_output
 
@@ -543,16 +543,29 @@ def convert_to_tiff(access_key, filename):
 
     file_prefix, file_extension = os.path.splitext(filename)
 
-    command = [
-        "convert",
-        "-density",
-        "200 ",
-        "-resize",
-        "1700x2200 ",
-        "./tmp/" + access_key + "/" + filename,
-        # "-flatten", # lol
-        "fax:./tmp/" + access_key + "/"+ file_prefix +".%02d.tiff"
-    ]
+    if not flatten:
+        command = [
+            "convert",
+            "-density",
+            "200 ",
+            "-resize",
+            "1700x2200 ",
+            "./tmp/" + access_key + "/" + filename,
+            "fax:./tmp/" + access_key + "/"+ file_prefix +".%02d.tiff"
+        ]
+    else:
+        command = [
+            "convert",
+            "-density",
+            "200 ",
+            "-background",
+            "white ",
+            "-flatten",
+            "-resize",
+            "1700x2200 ",
+            "./tmp/" + access_key + "/" + filename,
+            "fax:./tmp/" + access_key + "/"+ file_prefix +".%02d.tiff"
+        ]
     output = check_output(command)
 
 def convert_txt_to_ps(access_key, filename):
