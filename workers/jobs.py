@@ -80,7 +80,7 @@ def initial_process(id, data = None):
         pdf_file.close()
 
         try:
-            convert_to_tiff(job.access_key, job.filename + '.pdf')
+            convert_to_tiff(job.access_key, job.filename + '.pdf', True)
         except CalledProcessError, e:
             return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
 
@@ -92,7 +92,7 @@ def initial_process(id, data = None):
             return fail('JOBS_LOCAL_SAVE_FAIL', job, db)
 
         try:
-            convert_to_tiff(job.access_key, job.filename + ".pdf")
+            convert_to_tiff(job.access_key, job.filename + ".pdf", True)
         except CalledProcessError, e:
             return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
 
