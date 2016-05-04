@@ -191,25 +191,38 @@ def email_password_reset(email, password_reset, account):
 
 def send_email(message, account = None):
 
-    if not os.environ.get('MANDRILL_API_KEY'):
+    if not os.environ.get('SPARKPOST_API_KEY'):
         return False
 
-    import mandrill
-    client = mandrill.Mandrill(os.environ.get('MANDRILL_API_KEY'))
+    import requests
 
-    message['from_email'] = os.environ.get('EMAIL_FROM')
-    message['from_name'] = os.environ.get('EMAIL_FROM_NAME')
+    url = 'https://api.sparkpost.com/api/v1/transmissions'
+
+    headers = {
+        "Authorization": os.environ.get('SPARKPOST_API_KEY'),
+        "Content-Type": "application/json"
+        }
+
+    payload = {}
+
+    payload['content'] = message
+    payload['content']['from'] = {
+        "name": os.environ.get('EMAIL_FROM_NAME'),
+        "email": os.environ.get('EMAIL_FROM')
+    }
     
     if account:
         if account.first_name and account.last_name:
-            message['to'] = [{
-                'email': account.email,
-                'name': account.first_name + ' ' + account.last_name
+            payload['recipients'] = [{
+                'address': {
+                    'email': account.email,
+                    'name': account.first_name + ' ' + account.last_name
+                }
             }]
         else:
-            message['to'] = [{'email': account.email}]
+            payload['recipients'] = [{'address': account.email}]
 
     try:
-        client.messages.send(message=message, async=True)
-    except mandrill.Error, e:
-        o('A mandrill error occurred: %s - %s' % (e.__class__, e))
+        response = requests.post(url, headers=headers, json=payload)
+    except:
+        o('SparkPost API Fail: %s' % response.text)

@@ -32,7 +32,7 @@ Dependencies
 * [paps][8]
 * [efax][9] (the linux command to send faxes)
 * (Optional) [Stripe API][2], only needed if you're collecting payments.
-* (Optional) [Mandrill API][5], for sending account-related emails to
+* (Optional) [SparkPost API][5], for sending account-related emails to
   API users.
 * (Optional) [Amazon S3 storage][4]. Only needed if you have multiple servers
   for your workers (basically stores your temp files in the cloud)
@@ -79,7 +79,7 @@ export GLOBAL_SALT=omgtrolol
 export STRIPE_SECRET_KEY=sk_test_12345678
 export SERVEOFFICE2PDF_URL=http://convert.dev/convert
 export PROJECT_NAME='Fax Robot'
-export MANDRILL_API_KEY=asdf
+export SPARKPOST_API_KEY=asdf
 export EMAIL_FROM='support@faxrobot.io'
 export EMAIL_FROM_NAME='Fax Robot'
 export EMAIL_SUPPORT='support@faxrobot.io'
@@ -135,8 +135,8 @@ Here are the specific environment variables, and what they do:
 
 * **`PROJECT_NAME`**: The name you're giving to your instance of the project.
 
-* **`MANDRILL_API_KEY`**: Used for sending transactional emails to Fax Robot API
-  accounts. If not present, then emails are disabled.
+* **`SPARKPOST_API_KEY`**: Used for sending transactional emails to Fax Robot
+  API accounts. If not present, then emails are disabled.
 
 * **`EMAIL_FROM`**: The from email address for transactional emails.
 
@@ -239,7 +239,7 @@ API Documentation
 [2]: https://stripe.com
 [3]: https://www.gnu.org/copyleft/gpl.html
 [4]: http://aws.amazon.com/s3/
-[5]: http://mandrill.com
+[5]: https://www.sparkpost.com
 [6]: https://virtualenv.pypa.io/en/latest/
 [7]: https://github.com/lyonbros/faxrobot-www
 [8]: http://linux.die.net/man/1/paps

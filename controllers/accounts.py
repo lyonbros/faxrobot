@@ -404,24 +404,29 @@ def transactions():
         'transactions': [trans.public_data() for trans in res.items]
     })
 
-@accounts.route('/email_password_reset', methods=['POST'])
+@accounts.route('/email_password_reset', methods=['GET', 'POST'])
 def email_password_reset():
     """Emails a password reset"""
 
-    from library.mailer import email_password_reset
+    if request.method == 'POST':
 
-    v = request.values.get
+        from library.mailer import email_password_reset
 
-    emails = Account.query.filter_by(email=v('email'))
-    account = emails.first()
+        v = request.values.get
 
-    if account:
-        password_reset = PasswordReset(account.id)
-        db.session.add(password_reset)
-        db.session.commit()
-        email_password_reset(v('email'), password_reset, account)
+        emails = Account.query.filter_by(email=v('email'))
+        account = emails.first()
 
-    return jsonify({'ok': 'whatever'})
+        if account:
+            password_reset = PasswordReset(account.id)
+            db.session.add(password_reset)
+            db.session.commit()
+            email_password_reset(v('email'), password_reset, account)
+
+        return jsonify({'ok': 'whatever'})
+    else:
+        return render_template('accounts_email_password_reset.html');
+
 
 @accounts.route('/reset_password', methods=['POST'])
 def reset_password():
