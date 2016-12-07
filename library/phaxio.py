@@ -10,6 +10,7 @@ def valid_signature(token, url, parameters, files, signature):
     for filename in sorted(files.keys()):
         file_hash = hashlib.sha1()
         file_hash.update(files[filename].read())
+        files[filename].stream.seek(0)
         url += '{}{}'.format(filename, file_hash.hexdigest())
 
     return signature == hmac.new(key=token.encode('utf-8'), msg=url.encode('utf-8'), digestmod=hashlib.sha1).hexdigest()
