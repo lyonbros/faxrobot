@@ -9,6 +9,7 @@ from library.grab_bag import o
 from models.job import Job
 from models.transaction import Transaction
 from models.failed_payment import FailedPayment
+from models.incoming_number import IncomingNumber
 
 engine = create_engine(os.environ.get('DATABASE_URI').strip())
 Session = sessionmaker(bind=engine)
@@ -60,7 +61,7 @@ def initial_process(id, data = None):
             return fail('JOBS_NO_SERVEOFFICE2PDF', job, db)
 
         try:
-            save_local_file(job.access_key, job.filename, data)
+            job.filename = save_local_file(job.access_key, job.filename, data)
         except:
             return fail('JOBS_LOCAL_SAVE_FAIL', job, db)
 
@@ -87,41 +88,39 @@ def initial_process(id, data = None):
     elif file_extension == '.pdf':
 
         try:
-            save_local_file(job.access_key, job.filename + ".pdf", data)
+            job.filename = save_local_file(job.access_key, job.filename,  data)
         except:
             return fail('JOBS_LOCAL_SAVE_FAIL', job, db)
 
         try:
-            convert_to_tiff(job.access_key, job.filename + ".pdf", True)
+            convert_to_tiff(job.access_key, job.filename, True)
         except CalledProcessError, e:
             return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
 
     elif file_extension == '.png' or file_extension == '.jpg':
 
         try:
-            save_local_file(job.access_key, job.filename + file_extension, data)
+            job.filename = save_local_file(job.access_key, job.filename, data)
         except:
             return fail('JOBS_LOCAL_SAVE_FAIL', job, db)
 
         try:
-            convert_to_tiff(job.access_key, job.filename + file_extension)
+            convert_to_tiff(job.access_key, job.filename)
         except CalledProcessError, e:
             return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
 
     elif file_extension == '.txt':
 
         txt_filename = job.filename if job.filename else "fax.txt"
-
-        
-        save_local_file(job.access_key, txt_filename, data)
+        job.filename = save_local_file(job.access_key, txt_filename, data)
         
         try:
-            convert_txt_to_ps(job.access_key, txt_filename + ".ps")
+            convert_txt_to_ps(job.access_key, job.filename + ".ps")
         except CalledProcessError, e:
             return fail('JOBS_TXT_CONVERT_FAIL', job, db, str(e))
 
         try:
-            convert_to_tiff(job.access_key, txt_filename + ".ps", True)
+            convert_to_tiff(job.access_key, job.filename + ".ps", True)
         except CalledProcessError, e:
             return fail('JOBS_IMG_CONVERT_FAIL', job, db, str(e))
 
@@ -137,16 +136,10 @@ def initial_process(id, data = None):
         if file_extension == '.tiff':
             num_pages = num_pages + 1
 
-    if job.account.base_rate:
-        cost_per_page = job.account.base_rate
-    else:
-        cost_per_page = float(os.environ.get('DEFAULT_COST_PER_PAGE', '0.06'))
-
     job.status = 'processing'
     job.mod_date = datetime.now()
     job.num_pages = num_pages
-    job.cost = cost_per_page * num_pages
-    job.cover_cost = cost_per_page
+    job.compute_cost()
     session.commit()
 
     ########################################################################
@@ -187,7 +180,7 @@ def initial_process(id, data = None):
         job.status = 'ready'
         session.commit()
         if job.callback_url:
-            send_job_callback(job, db)   
+            send_job_callback(job, session)   
 
     return "SUCCESS: %s" % id
 
@@ -200,7 +193,7 @@ def send_fax(id):
     import stripe
     import traceback
     import json
-    from library.mailer import email_recharge_payment, email_success
+    from library.mailer import email_recharge_payment
     from rq import Worker
 
     device = Worker.MODEM_DEVICE
@@ -248,8 +241,8 @@ def send_fax(id):
                     session.commit()
 
                     job.account.add_credit(10, session)
-                    email_recharge_payment(job.account, 10, trans.id,
-                        charge.source.last4)
+                    # email_recharge_payment(job.account, 10, trans.id,
+                    #     charge.source.last4)
 
                 except:
                     payment = {'_DEBUG': traceback.format_exc()}
@@ -467,54 +460,138 @@ def send_fax(id):
     ########################################################################
     #   SEND FAX PHASE
     ########################################################################
-    try:
-        o('Modem dialing: 1%s' % job.destination)
+    if os.environ.get('PHAXIO_SENDING') == 'on':
 
-        cmd = ["efax", "-d", device, "-o1flll ", "-vchewmainrft ", "-l",
-               caller_id, "-t", "1%s" % job.destination]
-        cmd.extend(files_to_send)
-        output = check_output(cmd, stderr=STDOUT)
-        o('%s' % output)
+        import requests
+        from mimetypes import MimeTypes
 
-    except CalledProcessError, e:
+        payload = {
+            "to": "+%s" % job.destination,
+            "api_key": os.environ.get('PHAXIO_API_KEY'),
+            "api_secret": os.environ.get('PHAXIO_API_SECRET')
+        }
+        if os.environ.get('PHAXIO_OVERRIDE_RECEIVED'):
+            payload["callback_url"] = os.environ.get('PHAXIO_OVERRIDE_SENT')
 
-        output = str(e.output)
+        incoming_numbers = session.query(IncomingNumber).filter_by(
+            account_id= job.account.id)
 
-        if "No Answer" in output:
-            if os.environ.get('REQUIRE_PAYMENTS') == 'on':
-                o('No answer. Charge the customer anyway for wasting our time.')
-                o('Debiting $%s on account ID %s' % (cost, job.account.id))
-                commit_transaction(job, cost, 'no_answer_charge')            
+        if incoming_numbers and incoming_numbers.first():
+            payload["caller_id"] = incoming_numbers.first().fax_number            
 
-            return fail('JOBS_TRANSMIT_NO_ANSWER', job, db, output)
+        files = []
 
-        elif "number busy or modem in use" in output:
-            o('Line busy.')
-            return fail('JOBS_TRANSMIT_BUSY', job, db, output)
+        if job.cover:
+            
+            cover_filename = u'%s/cover.png' % path
+            f1 = open(cover_filename)
+            files.append(
+                ('filename[]', ('cover.png', f1, 'image/png'))
+            )
 
-        else:
-            o('Transmit error: %s' % output)
-            return fail('JOBS_TRANSMIT_FAIL', job, db, output)
+        mime = MimeTypes()
+        mimetype = mime.guess_type(job.filename)
 
-    o('Job completed without error!')
-    job.debug = output
+        job_filename = u'%s/%s' % (path, job.filename)
+
+        f2 = open(job_filename)
+        files.append(
+            ('filename[]', (job.filename, f2, mimetype))
+        )        
+
+        try:
+            url = "https://api.phaxio.com/v1/send"
+            r = requests.post(url, data=payload, files=files)
+            response = json.loads(r.text)
+
+            o('Got response from Twilio...')
+            o(r.text)
+
+            if response["success"] == False or not "data" in response \
+                or not "faxId" in response["data"]:
+
+                bad_number = "Phone number is not formatted correctly"
+
+                if "message" in response and bad_number in response["message"]:
+                    return fail('JOBS_PHAXIO_BAD_NUMBER', job, db, r.text)
+                else:
+                    return fail('JOBS_PHAXIO_TRANSMIT_FAIL', job, db, r.text)
+        except:
+            return fail('JOBS_PHAXIO_TRANSMIT_FAIL', job, db, "bah")
+
+        if f2:
+            f2.close()
+
+        if job.cover:
+            f1.close()
+
+        job.external_id = response["data"]["faxId"]
+        job.debug = r.text
+        session.commit()
+
+        return "waiting..."
+
+    else:
+        try:
+            o('Modem dialing: 1%s' % job.destination)
+
+            cmd = ["efax", "-d", device, "-o1flll ", "-vchewmainrft ", "-l",
+                   caller_id, "-t", "%s" % job.destination]
+            cmd.extend(files_to_send)
+            output = check_output(cmd, stderr=STDOUT)
+            o('%s' % output)
+
+        except CalledProcessError, e:
+
+            output = str(e.output)
+
+            if "No Answer" in output:
+                if os.environ.get('REQUIRE_PAYMENTS') == 'on':
+                    o('No answer. Charge the customer for wasting our time.')
+                    o('Debiting $%s on account ID %s' % (cost, job.account.id))
+                    commit_transaction(job, cost, 'no_answer_charge')            
+
+                return fail('JOBS_TRANSMIT_NO_ANSWER', job, db, output)
+
+            elif "number busy or modem in use" in output:
+                o('Line busy.')
+                return fail('JOBS_TRANSMIT_BUSY', job, db, output)
+
+            else:
+                o('Transmit error: %s' % output)
+                return fail('JOBS_TRANSMIT_FAIL', job, db, output)
+
+        o('Job completed without error!')
+        job.debug = output
+
+        return mark_job_sent(job, cost)
+
+def mark_job_sent(job, cost, db_session = None):
+
+    from library.mailer import email_success
+
+    if not db_session:
+        db_session = session
+
     job.mod_date = datetime.now()
     job.end_date = datetime.now()
     job.status = 'sent'
-    session.commit()
+    db_session.commit()
 
     o('Deleting data lol.')
-    job.delete_data(session)
+    job.delete_data(db_session)
 
     if job.account.email_success:
         email_success(job)
 
     if job.callback_url:
-        send_job_callback(job, db)
+        send_job_callback(job, db_session)
 
     if os.environ.get('REQUIRE_PAYMENTS') == 'on':
         o('Debiting $%s on account ID %s' % (cost, job.account.id))
         commit_transaction(job, cost, 'job_complete')
+
+    return True
 
 def commit_transaction(job, cost, trans_type, note = None):
     data = {
@@ -594,18 +671,30 @@ def convert_txt_to_ps(access_key, filename):
 
 def save_local_file(access_key, filename, data):
 
+    from werkzeug.utils import secure_filename
+
     o('Saving local file: %s' % filename) ######################################
 
-    f = open('./tmp/' + access_key + '/' + filename, 'wb')
+    safe_filename = secure_filename(filename)
+
+    f = open(u'./tmp/' + access_key + u'/' + safe_filename, 'wb')
     f.write(data)
     f.close()
 
-def fail(ref, job, db, debug=None):
+    return safe_filename
+
+def fail(ref, job, db, debug=None, db_session=None):
 
     from library.mailer import email_fail
     from rq import Worker
 
-    device = Worker.MODEM_DEVICE
+    if not db_session:
+        db_session = session
+
+    try:
+        device = Worker.MODEM_DEVICE
+    except AttributeError:
+        device = ""
 
     o('JOB FAILED: %s (%s)' % (ref, debug))
 
@@ -616,7 +705,7 @@ def fail(ref, job, db, debug=None):
     job.mod_date = datetime.now()
     job.status = 'failed'
     job.debug = error["msg"] if debug == None else debug
-    session.commit()
+    db_session.commit()
 
     if job.account.email_fail:
         email_fail(job, error["msg"], error["code"], error["status"],
@@ -627,11 +716,11 @@ def fail(ref, job, db, debug=None):
         )
 
     if job.callback_url:
-        send_job_callback(job, db)
+        send_job_callback(job, db_session)
 
     return "FAILED"
 
-def send_job_callback(job, db):
+def send_job_callback(job, db_session):
     import requests
     import traceback
 
@@ -645,7 +734,7 @@ def send_job_callback(job, db):
         o("CALLBACK FAIL: %s / %s" % (job.callback_url, traceback.format_exc()))
         job.callback_fail = job.callback_fail + 1
     
-    session.commit()
+    db_session.commit()
     
 
     

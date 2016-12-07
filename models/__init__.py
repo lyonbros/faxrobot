@@ -7,6 +7,8 @@ def initialize_database(app):
     from models.transaction import Transaction
     from models.failed_payment import FailedPayment
     from models.password_reset import PasswordReset
+    from models.incoming_number import IncomingNumber
+    from models.incoming_fax import IncomingFax
     import psycopg2
     import os
 

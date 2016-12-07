@@ -252,6 +252,7 @@ def remove_card():
     account.stripe_token = None
     account.stripe_card = None
     account.last4 = None
+    account.auto_recharge = 0
     account.mod_date = datetime.now()
     db.session.commit()
 

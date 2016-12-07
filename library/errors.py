@@ -203,7 +203,39 @@ api_errors = {
         "code": 6017,
         "msg": "The reset hash was not valid. Perhaps the link expired?",
         "field": "reset_hash"
-    }
+    },
+    "INCOMING_INSUFFICIENT_CREDIT": {
+        "code": 6018,
+        "msg": "No funds were available in the account to provision the fax number."
+    },
+    "INCOMING_CARD_DECLINED": {
+        "code": 6019,
+        "msg": "The account's stored credit information didn't work."
+    },
+    "INCOMING_FAILED_TO_PROVISION": {
+        "code": 6020,
+        "msg": "INTERNAL ERROR. Unable to provision that phone number."
+    },
+    "INCOMING_BOGUS_AREA_CODE": {
+        "code": 6021,
+        "msg": "The area code you chose is invalid or has no numbers at this time."
+    },
+    "INCOMING_NUMBER_EXISTS": {
+        "code": 6022,
+        "msg": "You already have an incoming number set up for your account."
+    },
+    "INCOMING_CANNOT_REMOVE": {
+        "code": 6023,
+        "msg": "There was no incoming number associated with this account to remove."
+    },
+    "INCOMING_FAILED_TO_DEPROVISION": {
+        "code": 6024,
+        "msg": "An error occurred while deprovisioning your number. Please contact support."
+    },
+    "INCOMING_BAD_PAGINATION_VALUE": {
+        "code": 6025,
+        "msg": "You sent an unacceptable page parameter."
+    },
 }
 worker_errors = {
     "JOBS_UPLOAD_S3_FAIL": {
@@ -327,6 +359,16 @@ worker_errors = {
         "code": 525,
         "status": "processing_error",
         "msg": "No suitable converter specified for exporting Office to PDF."
+    },
+    "JOBS_PHAXIO_TRANSMIT_FAIL": {
+        "code": 526,
+        "status": "api_Error",
+        "msg": "Could not transmit the fax to our telecommunications provider."
+    },
+    "JOBS_PHAXIO_BAD_NUMBER": {
+        "code": 527,
+        "status": "api_Error",
+        "msg": "The given fax number was not valid."
     },
 }
 

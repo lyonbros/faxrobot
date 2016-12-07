@@ -1,3 +1,4 @@
+import os
 from models import db
 from models.account import Account
 from datetime import datetime
@@ -13,15 +14,17 @@ class Job(db.Model):
 
     id              = Column(BigInteger, primary_key=True)
     account_id      = Column(BigInteger, ForeignKey('account.id'))
+    external_id     = Column(BigInteger, index=True)
     account         = db.relationship('Account', 
                         backref=db.backref('jobs',order_by=id))
     filename        = Column(String(255))
     body            = Column(Text)
-    destination     = Column(String(10))
+    destination     = Column(String(32))
     attempts        = Column(Integer, default=0)
     num_pages       = Column(Integer)
     cost            = Column(Float)
     cover_cost      = Column(Float)
+    international   = Column(SmallInteger, default=0)
     device          = Column(String(64))
     failed          = Column(SmallInteger, default=0)
     fail_code       = Column(Integer, default=0)
@@ -97,9 +100,39 @@ class Job(db.Model):
         self.callback_url       = callback_url
 
     def validate_destination(self, destination):
-        if len(destination) != 10:
+        if len(destination) < 10:
+            raise ValidationError('JOBS_BAD_DESTINATION')
+        if not destination.isdigit():
             raise ValidationError('JOBS_BAD_DESTINATION')
         return True
+
+    def determine_international(self):
+        if not self.destination:
+            return
+
+        destination = self.destination
+
+        if len(destination) == 10:
+            self.destination = u"1%s" % destination
+            self.international = 0
+
+        elif len(destination) > 11 or \
+            (len(destination) == 11 and not destination.startswith(u"1")):
+            self.international = 1
+
+        else:
+            self.international = 0
+
+    def compute_cost(self):
+        if self.account.base_rate:
+            page_cost = self.account.base_rate
+        else:
+            page_cost = float(os.environ.get('DEFAULT_COST_PER_PAGE', '0.10'))
+
+        international_multiplier = self.international + 1
+
+        self.cost = page_cost * self.num_pages * international_multiplier
+        self.cover_cost = page_cost * international_multiplier
 
     def delete_data(self, session=None):
         """
@@ -154,7 +187,7 @@ class Job(db.Model):
                     k.delete()
 
             except:
-                o("COULD NOT DELETE FILES FROM S3 OMG SHIT")
+                o("COULD NOT DELETE FILES FROM LOCAL OMG SHIT")
 
         return True
 
@@ -246,6 +279,7 @@ class Job(db.Model):
             'cover':            self.cover,
             'cost':             self.cost,
             'cover_cost':       self.cover_cost,
+            'international':    self.international,
             'total_cost':       total,
             'send_authorized':  self.send_authorized,
             'data_deleted':     self.data_deleted,

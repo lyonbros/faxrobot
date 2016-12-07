@@ -5,6 +5,10 @@ base_url = os.environ.get('FAXROBOT_URL')
 email_support = os.environ.get('EMAIL_SUPPORT')
 email_feedback = os.environ.get('EMAIL_FEEDBACK')
 project = os.environ.get('PROJECT_NAME')
+email_headers = {
+    "Authorization": os.environ.get('SPARKPOST_API_KEY'),
+    "Content-Type": "application/json"
+}
 
 def email_registration(account):
     message = {
@@ -36,6 +40,45 @@ def email_password_change(account):
     }
     send_email(message, account)
 
+def email_pending_deletion_warning(account, reason, fax_number):
+
+    msg = '<p>Hello!</p>'
+
+    if reason == "NO_FUNDS":
+        msg += ("<p>Your %s account does not have sufficient funds for this "
+                "month's incoming fax service, and automatic payments are "
+                "disabled for your account.</p>") % project
+    else:
+        msg += ("<p>Your credit card was declined and your %s account has "
+                "insufficient remaining funds for this month's incoming "
+                "fax service.</p>") % project
+
+    msg += ("<p>Please update your payment information in your "
+            "<a href=\"%s/account\"><strong>Account Settings</strong></a> as "
+            "soon as possible. If we are still unable to charge your account "
+            "after 7 days, your fax number will automatically be suspended."
+            "</p><p>Need assistance? Please reply to this email or contact "
+            "<a href=\"mailto:%s\">%s</a>.</p><p>Thanks!</p><p>--%s</p>") % (
+            base_url, email_support, email_support, project)
+
+    message = {
+        'subject': 'Payment overdue for your incoming fax number',
+        'html': msg
+    }
+    send_email(message, account)
+
+def email_deleted_number(account):
+    message = {
+        'subject': 'Your fax number was suspended :(',
+        'html': ('<p>Your monthly payment for incoming fax service could '
+                 'not be processed, and so the service was automatically '
+                 'suspended. For more information, please contact '
+                 '<a href="mailto:%s">%s</a> '
+                 'as soon as possible.</p><p>--%s</p>') % (
+                 email_support, email_support, project)
+    }
+    send_email(message, account)
+
 def email_api_key_change(account):
     message = {
         'subject': '%s API key changed' % project,
@@ -44,6 +87,18 @@ def email_api_key_change(account):
                  '<a href="mailto:%s">%s</a> '
                  'as soon as possible.</p><p>--%s</p>') % (project,
                  email_support, email_support, project)
+    }
+    send_email(message, account)
+
+def email_provision_info(account, fax_number):
+    message = {
+        'subject': 'Your fax number is activated!',
+        'html': ('<h2>Congratulations! You can now receive faxes at %s.</h2>'
+                 '<p>Your %s account will be charged $6 per month to '
+                 'keep your number active. You can manage your subscription by '
+                 'visiting your <a href="%s/account"><strong>Account Settings'
+                 '</strong></a> page.</p><p>Happy faxing!</p><p>--%s</p>') % (
+                 fax_number, project, base_url, project)
     }
     send_email(message, account)
 
@@ -88,6 +143,60 @@ def email_payment(account, charged, transaction_id, payment_last4,
         'html': html
     }
     send_email(message, account)
+
+def email_receive_fail(account,reason,external_id,from_number,num_pages,cost):
+
+    html = ("<p>%s was unable to deliver an incoming fax from <strong>%s"
+            "</strong> due to insufficient funds in your account.</p>") % (
+            project, from_number)
+    
+    if reason == "NO_FUNDS":
+        html += ("<p>Please visit your <strong><a href=\"%s/account\">Account "
+                 "Settings</a></strong> page to add funds, and consider turning"
+                 " on the automatic charging feature. ") % base_url
+    else:
+        html += ("<p>Your credit card was declined. Please visit "
+                 "your <strong><a href=\"%s/account\">Account Settings</a>"
+                 "</strong> page to update your credit card info.") % base_url
+
+    html += ("</p><p>Once your account is funded, please reply to this email "
+             "and we can deliver your fax.</p>")
+
+    html += ("<hr/>"
+             "<p><strong>Reference #:</strong> %s<br/>"
+             "<strong>From:</strong> %s<br/>"
+             "<strong>Pages:</strong> %s<br/>"
+             "<strong>Cost:</strong> $%.2f</p>") % (external_id, from_number,
+             num_pages, cost)
+
+    message = {
+        "subject": "Unable to receive fax :(",
+        "html": html
+    }
+    send_email(message, account)
+
+def email_fax(account, external_id, from_number, num_pages, cost,
+        filename, access_key):
+
+    html = ("<h1>You've received a fax from %s</h1><p>Your fax is attached. "
+            "You can also download or delete it from "
+            "<a href=\"%s/jobs/received\"><strong>%s</strong></a>.</p>") % (
+            from_number, base_url, project)
+
+    html += ("<hr/>"
+             "<p><strong>Reference #:</strong> %s<br/>"
+             "<strong>From:</strong> %s<br/>"
+             "<strong>Pages:</strong> %s<br/>"
+             "<strong>Cost:</strong> $%.2f</p><hr/><p>"
+             "<strong>Remaining Account Balance:</strong> $%.2f</p>") % (
+             external_id, from_number, num_pages, cost, account.credit)
+
+    message = {
+        "subject": "Received fax from %s" % from_number,
+        "html": html
+    }
+    send_email(message, account, "%s.pdf" % external_id, filename,
+        "application/pdf")
 
 def email_recharge_payment(account, charged, transaction_id, payment_last4):
 
@@ -189,19 +298,16 @@ def email_password_reset(email, password_reset, account):
     }
     send_email(message, account)
 
-def send_email(message, account = None):
+def send_email(message, account = None, attach_name=None, attach_file=None,
+    attach_mime=None):
 
     if not os.environ.get('SPARKPOST_API_KEY'):
         return False
 
     import requests
+    import base64
 
     url = 'https://api.sparkpost.com/api/v1/transmissions'
-
-    headers = {
-        "Authorization": os.environ.get('SPARKPOST_API_KEY'),
-        "Content-Type": "application/json"
-        }
 
     payload = {}
 
@@ -222,7 +328,50 @@ def send_email(message, account = None):
         else:
             payload['recipients'] = [{'address': account.email}]
 
+    if attach_name and attach_file and attach_mime:
+
+        with open(attach_file) as f:
+            attach_data = base64.b64encode(f.read())
+
+        payload['content']['attachments'] = [
+            {
+                "type": attach_mime,
+                "name": attach_name,
+                "data": attach_data
+            }
+        ]
+
     try:
-        response = requests.post(url, headers=headers, json=payload)
+        response = requests.post(url, headers=email_headers, json=payload)
     except:
         o('SparkPost API Fail: %s' % response.text)
+
+def email_admin(message, subject = None):
+
+    if not os.environ.get('SPARKPOST_API_KEY'):
+        return False
+
+    import requests
+
+    url = 'https://api.sparkpost.com/api/v1/transmissions'
+
+    payload = {
+        "content": {
+            "subject": subject if subject else "%s CRITICAL ERROR" % project,
+            "html": message,
+            "from": {
+                "name": os.environ.get('EMAIL_FROM_NAME'),
+                "email": os.environ.get('EMAIL_FROM')
+            }
+        },
+        "recipients": [{'address': os.environ.get('EMAIL_FROM')}]
+    }
+
+    try:
+        response = requests.post(url, headers=email_headers, json=payload)
+    except:
+        o('SparkPost API Fail: %s' % response.text)
+
+
+
+

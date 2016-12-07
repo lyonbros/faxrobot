@@ -15,7 +15,7 @@ class Transaction(db.Model):
     amount          = Column(Float)
     initial_balance = Column(Float)
     job_id          = Column(BigInteger, index=True)
-    job_destination = Column(String(10))
+    job_destination = Column(String(32))
     source          = Column(String(10))
     source_id       = Column(String(64))
     ip_address      = Column(String(64))

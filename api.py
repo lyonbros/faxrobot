@@ -13,9 +13,11 @@ initialize_database(app)
 
 from controllers.jobs import jobs as jobs_module
 from controllers.accounts import accounts as accounts_module
+from controllers.incoming import incoming as incoming_module
 
 app.register_blueprint(jobs_module)
 app.register_blueprint(accounts_module)
+app.register_blueprint(incoming_module)
 
 if __name__ == '__main__':
     if app.config['DEBUG'] == True:

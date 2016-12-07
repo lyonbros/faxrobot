@@ -138,7 +138,7 @@ class Account(db.Model):
         Returns a dictionary of fields that are safe to display to the client.
         """
 
-        return {
+        data = {
             'api_key': self.api_key,
             'email': self.email,
             'first_name': self.first_name,
@@ -156,6 +156,11 @@ class Account(db.Model):
             'email_fail': self.email_fail,
             'email_list': self.email_list,
         };
+
+        if len(self.incoming_numbers) > 0:
+            data["incoming_number"] = self.incoming_numbers[0].fax_number
+
+        return data;
 
     @classmethod
     def authorize(cls_obj, api_key, required = False):

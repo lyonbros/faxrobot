@@ -3,12 +3,14 @@ from flask import Blueprint, request, render_template, jsonify, current_app
 from models import db
 from library.grab_bag import fix_ip, o
 from library.errors import api_error, ValidationError
+from library.phaxio import valid_signature
 from models.job import Job
 from models.account import Account
 from rq import Queue
 from redis import Redis
-from workers.jobs import initial_process, send_fax
+from workers.jobs import initial_process, send_fax, fail, mark_job_sent
 from datetime import datetime
+
 
 jobs = Blueprint('jobs', __name__, url_prefix='/jobs')
 
@@ -65,6 +67,7 @@ def create():
             try:
                 job = Job(**data);
                 job.validate()
+                job.determine_international()
             except ValidationError, err:
                 return jsonify(api_error(err.ref)), 400
 
@@ -95,7 +98,8 @@ def update(access_key):
 
     account_id = Account.authorize(request.values.get('api_key'))
     if not account_id:
-        return jsonify(api_error('API_UNAUTHORIZED')), 401
+        account_id = 0
+        # return jsonify(api_error('API_UNAUTHORIZED')), 401
 
     v = request.values.get
 
@@ -176,6 +180,8 @@ def update(access_key):
 
         job.mod_date = datetime.now()
         job.validate()
+        job.determine_international()
+        job.compute_cost()
 
         if job.status == 'ready' and job.send_authorized:
             job.status = 'queued'
@@ -305,3 +311,58 @@ def list():
         'has_prev': jobs.has_prev,
         'jobs':     [job.public_data() for job in jobs.items]
     })
+
+@jobs.route('/webhook', methods=['GET', 'POST'])
+def webhook():
+    """Listens for fax send receipts from Phaxio"""
+
+    import json
+
+    raw = request.values.get("fax")
+    fax = json.loads(raw)
+    sig = request.headers.get("X-Phaxio-Signature")
+    url = request.base_url
+
+    # print request.headers
+    # print raw
+
+    if not valid_signature(os.environ.get("PHAXIO_CALLBACK_TOKEN"), url,
+        request.values, request.files, sig):
+        return ":("
+
+    jobs = Job.query.filter_by(external_id=fax["id"])
+
+    if not jobs or jobs.first() == None:
+        return ":("
+
+    job = jobs.first()
+
+    if not job.status == "started":
+        return ":("
+
+    if fax["status"] == "failure":
+        if "error_code" in fax:
+            msg = fax["error_code"]
+            code  = fax["error_type"]
+        else:
+            msg = fax["recipients"][0]["error_code"]
+            code = fax["recipients"][0]["error_type"]
+
+        if code == "documentConversionError":
+            fail("JOBS_IMG_CONVERT_FAIL", job, db, raw, db.session)
+
+        elif code == "lineError" and "Busy" in msg:
+            fail("JOBS_TRANSMIT_BUSY", job, db, raw, db.session)
+
+        elif code == "lineError":
+            fail("JOBS_TRANSMIT_NO_ANSWER", job, db, raw, db.session)
+
+        else:
+            fail('JOBS_TRANSMIT_FAIL', job, db, raw, db.session)
+
+    elif fax["status"] == "success":
+
+        cost = job.cost if not job.cover else job.cost + job.cover_cost
+        mark_job_sent(job, cost, db.session)
+
+    return "lol"
