@@ -13,7 +13,7 @@ class FailedPayment(db.Model):
     amount          = Column(Float)
     source          = Column(String(10))
     debug           = Column(Text)
-    ip_address      = Column(String(64))
+    ip_address      = Column(String(255))
     payment_type    = Column(String(64))
     create_date     = Column(DateTime)
     mod_date        = Column(DateTime)

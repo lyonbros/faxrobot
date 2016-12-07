@@ -18,7 +18,7 @@ class Transaction(db.Model):
     job_destination = Column(String(32))
     source          = Column(String(10))
     source_id       = Column(String(64))
-    ip_address      = Column(String(64))
+    ip_address      = Column(String(255))
     note            = Column(String(255))
     trans_type      = Column(String(64))
     create_date     = Column(DateTime)

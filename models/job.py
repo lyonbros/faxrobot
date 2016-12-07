@@ -31,7 +31,7 @@ class Job(db.Model):
     status          = Column(String(255), index=True)
     debug           = Column(Text)
     access_key      = Column(String(64), unique=True, index=True)
-    ip_address      = Column(String(64))
+    ip_address      = Column(String(255))
     send_authorized = Column(SmallInteger, default=0)
     data_deleted    = Column(SmallInteger, default=0)
 
