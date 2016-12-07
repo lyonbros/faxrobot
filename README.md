@@ -1,6 +1,6 @@
 Fax Robot API
 =============
-#### A Python API to send faxes
+#### A Python API to send faxes. Now, with chicken!
 
 Introduction
 ------------
