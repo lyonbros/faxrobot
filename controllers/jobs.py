@@ -317,6 +317,7 @@ def webhook():
     """Listens for fax send receipts from Phaxio"""
 
     import json
+    import requests
 
     raw = request.values.get("fax")
     fax = json.loads(raw)
@@ -364,5 +365,15 @@ def webhook():
 
         cost = job.cost if not job.cover else job.cost + job.cover_cost
         mark_job_sent(job, cost, db.session)
+
+        # delete job data from Phaxio
+        payload = {
+            "id": fax["id"],
+            "files_only": True,
+            "api_key": os.environ.get('PHAXIO_API_KEY'),
+            "api_secret": os.environ.get('PHAXIO_API_SECRET')
+        }
+        r = requests.post("https://api.phaxio.com/v1/deleteFax", data=payload)
+        print "deleted: %s" % r.text
 
     return "lol"
