@@ -25,9 +25,18 @@ def charge_subscribers():
               "SELECT   id, account_id, fax_number, flagged_for_deletion,      "
               "         last_billed, create_date, mod_date                     "
               "FROM     incoming_number                                        "
-              "WHERE    mod_date < now() - \'7 days\'::interval                "
-              "AND      last_billed < now() - \'30 days\'::interval            "
+              "WHERE    (                                                      "
+              "             mod_date IS NULL                                   "
+              "             OR                                                 "
+              "             mod_date < now() - \'7 days\'::interval            "
+              "         )                                                      "
+              "AND      (                                                      "
+              "             last_billed IS NULL                                "
+              "             OR                                                 "
+              "             last_billed < now() - \'30 days\'::interval        "
+              "         )                                                      "
               )
+    
     cursor  = conn.cursor()
     cursor.execute(query)
 
