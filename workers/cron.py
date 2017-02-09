@@ -9,6 +9,7 @@ import os
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from datetime import datetime
+from library.grab_bag import o
 
 engine = create_engine(os.environ.get('DATABASE_URI').strip())
 Session = sessionmaker(bind=engine)
@@ -16,8 +17,8 @@ session = Session()
 
 def charge_subscribers():
 
-    print "QUERYING INCOMING FAX NUMBERS FOR PAYMENT PROCESSING!"
-    print " "
+    o("QUERYING INCOMING FAX NUMBERS FOR PAYMENT PROCESSING!")
+    o(" ")
 
     conn    = psycopg2.connect(os.environ.get('DATABASE_URI'))
     query   = (
@@ -42,25 +43,25 @@ def charge_subscribers():
 
         account_status = "SUCCESS"
 
-        print "Fax number %s for account %s" % (fax_number, account_id)
+        o("Fax number %s for account %s" % (fax_number, account_id))
 
         if account.credit < 6 and not account.allow_overflow:
 
-            print " - account credit below threshold"
+            o(" - account credit below threshold")
 
             if account.stripe_card and account.auto_recharge:
                 if not auto_recharge(account, "localhost", session) == True:
                     account_status = "DECLINE"
-                    print " - CARD DECLINED :("
+                    o(" - CARD DECLINED :(")
                 else:
-                    print " - payment succeeded :)"
+                    o(" - payment succeeded :)")
             else:
                 account_status = "NO_FUNDS"
-                print " - AUTO-CHARGED DISABLED AND NO FUNDS IN ACCOUNT :("
+                o(" - AUTO-CHARGED DISABLED AND NO FUNDS IN ACCOUNT :(")
 
         if not account_status == "SUCCESS" and flagged_for_deletion:
 
-            print " - number is already marked for deletion >_<"
+            o(" - number is already marked for deletion >_<")
 
             session.delete(incoming_number)
             session.commit()
@@ -70,7 +71,7 @@ def charge_subscribers():
 
             email_deleted_number(account)
 
-            print " - deleted number and emailed customer."
+            o(" - deleted number and emailed customer.")
 
         elif not account_status == "SUCCESS" and not flagged_for_deletion:
 
@@ -80,11 +81,11 @@ def charge_subscribers():
 
             email_pending_deletion_warning(account, account_status, fax_number)
 
-            print " - flagged number for deletion, emailed warning to customer."
+            o(" - flagged number for deletion, emailed warning to customer.")
 
         else:
 
-            print " - account successfully charged. hooray!"
+            o(" - account successfully charged. hooray!")
 
             incoming_number.mod_date = datetime.now()
             incoming_number.last_billed = datetime.now()
@@ -106,11 +107,12 @@ def charge_subscribers():
 
             account.subtract_credit(6, session)
 
-        print " "
+        o(" ")
 
     conn.commit()
     conn.close()
 
     email_admin("YAY!", "Payments cron job success!")
 
-    print "ALL DONE!"
+    o("ALL DONE!")
+    return "lulz"
