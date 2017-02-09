@@ -6,3 +6,4 @@ tmp
 *.pyc
 uwsgi.ini
 log
+scripts

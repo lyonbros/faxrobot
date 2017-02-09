@@ -236,6 +236,10 @@ api_errors = {
         "code": 6025,
         "msg": "You sent an unacceptable page parameter."
     },
+    "ADMIN_BAD_ADMIN_TOKEN": {
+        "code": 7000,
+        "msg": "The specified admin token was invalid."
+    },
 }
 worker_errors = {
     "JOBS_UPLOAD_S3_FAIL": {

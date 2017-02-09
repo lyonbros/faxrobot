@@ -4,12 +4,14 @@ from models import db
 from sqlalchemy.exc import IntegrityError
 from rq import Queue
 from redis import Redis
+from rq import Queue
 from library.grab_bag import fix_ip, password_hash, random_hash, o
 from library.errors import api_error, ValidationError
 from models.account import Account
 from models.transaction import Transaction
 from models.failed_payment import FailedPayment
 from models.password_reset import PasswordReset
+from workers.cron import charge_subscribers
 
 accounts = Blueprint('accounts', __name__, url_prefix='/accounts')
 
@@ -454,3 +456,14 @@ def reset_password():
     db.session.commit()
 
     return jsonify(account.public_data())
+
+@accounts.route('/charge', methods=['GET'])
+def charge():
+    if request.values.get("admin_token") != os.environ.get("ADMIN_TOKEN"):
+        return jsonify(api_error("ADMIN_BAD_ADMIN_TOKEN")), 401
+
+    redis_conn = Redis.from_url(current_app.config['REDIS_URI'])
+    q = Queue('default', connection=redis_conn)
+    q.enqueue_call(func=charge_subscribers,  timeout=300)
+
+    return jsonify({"kthx": "bai"})
