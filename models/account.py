@@ -8,7 +8,7 @@ from library.grab_bag import random_hash, password_hash
 from library.errors import ValidationError
 import os
 
-default_cost_per_page = float(os.environ.get('DEFAULT_COST_PER_PAGE', '0.06'))
+default_cost_per_page = float(os.environ.get('DEFAULT_COST_PER_PAGE', '0.10'))
 
 class Account(db.Model):
     __tablename__ = 'account'
