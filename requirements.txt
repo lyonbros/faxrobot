@@ -12,7 +12,7 @@ gevent==1.0.1
 greenlet==0.4.5
 itsdangerous==0.24
 poster==0.8.1
-psycopg2==2.7.1
+psycopg2==2.7.4
 redis==2.10.3
 requests==2.5.1
 rq==0.4.6
