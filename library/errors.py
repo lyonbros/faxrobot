@@ -118,6 +118,10 @@ api_errors = {
         "code": 5024,
         "msg": "The job is being processed and cannot be deleted now."
     },
+    "JOBS_RATE_LIMIT_REACHED": {
+        "code": 5025,
+        "msg": "Rate limit exceeded. Please try again later."
+    },
     "ACCOUNTS_MISSING_EMAIL": {
         "code": 6000,
         "msg": "Please enter an email address.",
@@ -373,7 +377,7 @@ worker_errors = {
         "code": 527,
         "status": "api_Error",
         "msg": "The given fax number was not valid."
-    },
+    }
 }
 
 def api_error(ref):

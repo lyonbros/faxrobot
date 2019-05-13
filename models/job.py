@@ -8,6 +8,7 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy.exc import SQLAlchemyError
 from library.grab_bag import random_hash, o
 from library.errors import ValidationError
+import psycopg2
 
 class Job(db.Model):
     __tablename__ = 'job'
@@ -188,6 +189,26 @@ class Job(db.Model):
 
             except:
                 o("COULD NOT DELETE FILES FROM LOCAL OMG SHIT")
+
+        return True
+
+    def rate_limit(self, account_id):
+        conn    = psycopg2.connect(os.environ.get('DATABASE_URI'))
+        query   = (
+              "SELECT   count(id)                                              "
+              "FROM     job                                                    "
+              "WHERE    create_date > now() - \'5 minutes\'::interval          "
+              "AND      account_id = %s                                        "
+              "AND      send_authorized = 1;                                   "
+              )
+        data = [account_id]
+    
+        cursor  = conn.cursor()
+        cursor.execute(query, data)
+        result = cursor.fetchone()
+
+        if result[0] > 0:
+            raise ValidationError('JOBS_RATE_LIMIT_REACHED')
 
         return True
 

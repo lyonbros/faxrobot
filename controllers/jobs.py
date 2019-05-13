@@ -182,6 +182,7 @@ def update(access_key):
         job.validate()
         job.determine_international()
         job.compute_cost()
+        job.rate_limit(account_id)
 
         if job.status == 'ready' and job.send_authorized:
             job.status = 'queued'
