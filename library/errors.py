@@ -377,6 +377,11 @@ worker_errors = {
         "code": 527,
         "status": "api_Error",
         "msg": "The given fax number was not valid."
+    },
+    "JOBS_RATE_LIMIT_REACHED": {
+        "code": 528,
+        "status": "api_Error",
+        "msg": "Rate limit exceeded. Please try again later."
     }
 }
 

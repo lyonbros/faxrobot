@@ -171,6 +171,10 @@ def initial_process(id, data = None):
     job.mod_date = datetime.now()
 
     if job.send_authorized:
+        try:
+            job.rate_limit(job.account_id)
+        except:
+            return fail('JOBS_RATE_LIMIT_REACHED', job, db)
         job.status = 'queued'
         session.commit()
         redis_conn = redis.from_url(os.environ.get('REDIS_URI'))
