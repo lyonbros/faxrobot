@@ -338,7 +338,7 @@ def auto_recharge(account, ip, session = None):
             amount=1000,
             currency="usd",
             customer=account.stripe_token,
-            description="Auto-recharging account %s"% account.id
+            description="Fax Robot service for account #%s"% account.id
         )
         data = {
             'account_id':       account.id,
