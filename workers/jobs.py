@@ -661,7 +661,7 @@ def convert_txt_to_ps(access_key, filename):
     command = [
         "paps",
         "--font",
-        "Droid Sans Mono",
+        "Liberation Mono",
         "--cpi",
         " 12",
         # "--header", # JL NOTE ~ probably don't want to have this
